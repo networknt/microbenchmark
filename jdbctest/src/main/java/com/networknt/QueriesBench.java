@@ -35,7 +35,7 @@ public class QueriesBench extends BenchBase
         int queries = 20;
 
         List<CompletableFuture<World>> worlds = IntStream.range(0, queries)
-                .mapToObj(i -> CompletableFuture.supplyAsync(() -> Helper.selectWorld(DS), Helper.smallExecutor))
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> Helper.selectWorld(DS), Helper.bigExecutor))
                 .collect(Collectors.toList());
         List<World> list = worlds.stream()
                 .map(CompletableFuture::join)
@@ -45,17 +45,17 @@ public class QueriesBench extends BenchBase
 
     @Benchmark
     @CompilerControl(CompilerControl.Mode.INLINE)
-    public List<World> queryWithDsBig() throws SQLException
+    public List<World> queryWithDsBig() throws Exception
     {
         int queries = 20;
 
         List<CompletableFuture<World>> worlds = IntStream.range(0, queries)
                 .mapToObj(i -> CompletableFuture.supplyAsync(() -> Helper.selectWorld(DS), Helper.bigExecutor))
                 .collect(Collectors.toList());
-        List<World> list = worlds.stream()
-                .map(CompletableFuture::join)
-                .collect(Collectors.toList());
-        return list;
+
+        CompletableFuture<List<World>> allDone = Helper.sequence(worlds);
+
+        return allDone.get();
     }
 
     /*
